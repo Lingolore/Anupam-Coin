@@ -1,0 +1,22 @@
+[package]
+name = "liquidity-pool"
+version = "0.1.0"
+description = "AMM liquidity pool for Anupam Coin"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = "0.28.0"
+anchor-spl = "0.28.0"
+solana-program = "1.16.0"
+anupam-token = { path = "../anupam-token", features = ["cpi"] }
+
