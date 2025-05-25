@@ -1,372 +1,321 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{
-    token::{self, Mint, Token, TokenAccount, Transfer},
-    associated_token::AssociatedToken,
-};
-use std::ops::Deref;
+// For Token-2022, use these imports:
+use anchor_spl::token_2022::{self, Burn, MintTo};
+use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface}; // These come from token_interface
 
-declare_id!("6qSoMSj9qsZW3LHCLDgnC6DY8SQbTEUpyryEDztW9EzX");
-
-// Constants
-const DAYS_THRESHOLD: u8 = 7; // 7 days above threshold
-const PRICE_THRESHOLD: u64 = 105_000_000; // $1.05 with 8 decimals
-const MIN_RESERVE_RATIO: u8 = 110; // 110% minimum reserve ratio
-const TRANSFER_FEE_NUMERATOR: u64 = 3;
-const TRANSFER_FEE_DENOMINATOR: u64 = 1000; // 0.3% fee
-const MAX_PRICE_HISTORY: usize = 30; // Store 30 days of price data
+declare_id!("HonmKmKytc7c8o3gZrncVE183LVYdc6oCw7MfT1d1CHc");
 
 #[program]
-pub mod anupam_coin {
+pub mod anupam_coin_wrapper {
     use super::*;
 
-    // Initialize the token and state accounts
-    pub fn initialize(ctx: Context<Initialize>, bump: u8) -> Result<()> {
-        let state = &mut ctx.accounts.state;
-        state.authority = ctx.accounts.authority.key();
-        state.mint = ctx.accounts.mint.key();
-        state.reserve_mint = ctx.accounts.reserve_mint.key();
-        state.reserve_ratio = 0; // Start with 0 reserve ratio
-        state.price_history = Vec::new();
-        state.price_timestamp_history = Vec::new();
-        state.latest_price = 0;
-        state.days_above_threshold = 0;
-        state.bump = bump;
-        
-        msg!("Anupam Coin initialized with authority: {:?}", state.authority);
-        msg!("Token mint: {:?}", state.mint);
-        msg!("Reserve mint: {:?}", state.reserve_mint);
-        
+    // Initialize the wrapper contract - Sprint 1 version
+    pub fn initialize(ctx: Context<Initialize>, authority: Pubkey) -> Result<()> {
+        let config = &mut ctx.accounts.config;
+        config.authority = authority;
+        config.mint = ctx.accounts.mint.key();
+        config.target_price = 1_050_000; // $1.05 in micro-dollars
+        config.current_price = 1_000_000; // $1.00 default
+        config.transfer_fee_bps = 30; // 0.3% = 30 basis points
+        config.is_paused = false;
+        config.price_above_target_since = 0;
+        config.consecutive_days_above_target = 0;
+
+        msg!("Anupam Coin Wrapper initialized");
         Ok(())
     }
 
-    // Update price data
+    // Manual price update for Sprint 1 (no oracle yet)
     pub fn update_price(
         ctx: Context<UpdatePrice>,
-        new_price: u64,
-        timestamp: i64
+        new_price: u64, // Price in micro-dollars (1.05 = 1_050_000)
     ) -> Result<()> {
-        let state = &mut ctx.accounts.state;
-        
-        // Check if caller is the oracle authority
-        require!(
-            ctx.accounts.authority.key() == state.authority,
-            AnupamCoinError::UnauthorizedPriceUpdate
-        );
-        
-        // Add price to history (keeping the last MAX_PRICE_HISTORY prices)
-        if state.price_history.len() >= MAX_PRICE_HISTORY {
-            state.price_history.remove(0);
-            state.price_timestamp_history.remove(0);
-        }
-        
-        state.price_history.push(new_price);
-        state.price_timestamp_history.push(timestamp);
-        state.latest_price = new_price;
-        
-        // Update days above threshold
-        if new_price >= PRICE_THRESHOLD {
-            state.days_above_threshold = state.days_above_threshold.saturating_add(1);
+        let config = &mut ctx.accounts.config;
+        let clock = Clock::get()?;
+
+        config.current_price = new_price;
+
+        // Track time above target price
+        if new_price > config.target_price {
+            if config.price_above_target_since == 0 {
+                config.price_above_target_since = clock.unix_timestamp;
+                config.consecutive_days_above_target = 0;
+            }
+
+            // Calculate consecutive days (simplified for Sprint 1)
+            let days_above = (clock.unix_timestamp - config.price_above_target_since) / 86400;
+            config.consecutive_days_above_target = days_above as u8;
         } else {
-            state.days_above_threshold = 0; // Reset counter if price drops below threshold
+            // Reset if price drops below target
+            config.price_above_target_since = 0;
+            config.consecutive_days_above_target = 0;
         }
-        
-        msg!("Price updated to: {}", new_price);
-        msg!("Days above threshold: {}", state.days_above_threshold);
-        
+
+        emit!(PriceUpdated {
+            price: new_price,
+            consecutive_days_above_target: config.consecutive_days_above_target,
+        });
+
         Ok(())
     }
 
-    // Update reserve ratio
-    pub fn update_reserve_ratio(
-        ctx: Context<UpdateReserveRatio>,
-        new_ratio: u8
-    ) -> Result<()> {
-        let state = &mut ctx.accounts.state;
-        
-        // Check if caller is the authority
-        require!(
-            ctx.accounts.authority.key() == state.authority,
-            AnupamCoinError::Unauthorized
-        );
-        
-        state.reserve_ratio = new_ratio;
-        msg!("Reserve ratio updated to: {}%", new_ratio);
-        
-        Ok(())
-    }
+    // Simple controlled mint with time-lock check
+    pub fn mint_tokens(ctx: Context<MintTokens>, amount: u64) -> Result<()> {
+        let config = &ctx.accounts.config;
 
-    // Mint tokens (with time-lock and reserve ratio checks)
-    pub fn mint(
-        ctx: Context<MintTokens>, 
-        amount: u64
-    ) -> Result<()> {
-        let state = &ctx.accounts.state;
-        
-        // Check price threshold condition
-        require!(
-            state.days_above_threshold >= DAYS_THRESHOLD,
-            AnupamCoinError::PriceConditionNotMet
-        );
-        
-        // Check reserve ratio condition
-        require!(
-            state.reserve_ratio >= MIN_RESERVE_RATIO,
-            AnupamCoinError::InsufficientReserveRatio
-        );
-        
-        // Check if caller is the authority
-        require!(
-            ctx.accounts.authority.key() == state.authority,
-            AnupamCoinError::Unauthorized
-        );
-        
-        // CPI to mint tokens
-        let seeds = &[
-            b"state".as_ref(),
-            state.mint.as_ref(),
-            &[state.bump],
-        ];
+        // Basic checks for Sprint 1
+        // require!(!config.is_paused, ErrorCode::ContractPaused);
+        // require!(
+        //     config.current_price > config.target_price,
+        //     ErrorCode::PriceBelowTarget
+        // );
+        // require!(
+        //     config.consecutive_days_above_target >= 7,
+        //     ErrorCode::TimeRequirementNotMet
+        // );
+
+        // Mint tokens using PDA as authority
+        let seeds = &[b"config".as_ref(), &[ctx.bumps.config]];
         let signer = &[&seeds[..]];
-        
-        let cpi_accounts = token::MintTo {
+
+        let cpi_accounts = MintTo {
             mint: ctx.accounts.mint.to_account_info(),
-            to: ctx.accounts.token_account.to_account_info(),
-            authority: ctx.accounts.state.to_account_info(),
+            to: ctx.accounts.destination.to_account_info(),
+            authority: ctx.accounts.config.to_account_info(),
         };
-        
         let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
-        
-        token::mint_to(cpi_ctx, amount)?;
-        
-        msg!("Minted {} tokens to {}", amount, ctx.accounts.token_account.key());
-        
+
+        token_2022::mint_to(cpi_ctx, amount)?;
+
+        emit!(TokensMinted {
+            amount,
+            recipient: ctx.accounts.destination.key(),
+        });
+
         Ok(())
     }
 
-    // Burn tokens
-    pub fn burn(
-        ctx: Context<BurnTokens>, 
-        amount: u64
-    ) -> Result<()> {
-        // Anyone can burn their own tokens
-        let cpi_accounts = token::Burn {
+    // Simple burn function
+    pub fn burn_tokens(ctx: Context<BurnTokens>, amount: u64) -> Result<()> {
+        let config = &ctx.accounts.config;
+        require!(!config.is_paused, ErrorCode::ContractPaused);
+
+        let cpi_accounts = Burn {
             mint: ctx.accounts.mint.to_account_info(),
-            from: ctx.accounts.token_account.to_account_info(),
-            authority: ctx.accounts.owner.to_account_info(),
+            from: ctx.accounts.source.to_account_info(),
+            authority: ctx.accounts.user.to_account_info(),
         };
-        
         let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-        
-        token::burn(cpi_ctx, amount)?;
-        
-        msg!("Burned {} tokens from {}", amount, ctx.accounts.token_account.key());
-        
+
+        token_2022::burn(cpi_ctx, amount)?;
+
+        emit!(TokensBurned {
+            amount,
+            user: ctx.accounts.user.key(),
+        });
+
         Ok(())
     }
 
-    // Transfer tokens with fee
-    pub fn transfer(
-        ctx: Context<TransferTokens>, 
-        amount: u64
-    ) -> Result<()> {
-        // Calculate fee amount
-        let fee_amount = amount
-            .checked_mul(TRANSFER_FEE_NUMERATOR)
-            .unwrap()
-            .checked_div(TRANSFER_FEE_DENOMINATOR)
-            .unwrap();
-        
-        let transfer_amount = amount.checked_sub(fee_amount).unwrap();
-        
-        // Transfer to recipient
-        let transfer_accounts = Transfer {
+    // Transfer with fee (Sprint 1 requirement)
+    pub fn transfer_with_fee(ctx: Context<TransferWithFee>, amount: u64) -> Result<()> {
+        let config = &ctx.accounts.config;
+        require!(!config.is_paused, ErrorCode::ContractPaused);
+
+        // Calculate fee (0.3% = 30 basis points)
+        let fee_amount = (amount * config.transfer_fee_bps as u64) / 10000;
+        let transfer_amount = amount - fee_amount;
+
+        // Transfer main amount
+        let cpi_accounts = token_2022::Transfer {
             from: ctx.accounts.from.to_account_info(),
             to: ctx.accounts.to.to_account_info(),
-            authority: ctx.accounts.owner.to_account_info(),
+            authority: ctx.accounts.authority.to_account_info(),
         };
-        
         let cpi_program = ctx.accounts.token_program.to_account_info();
-        let transfer_ctx = CpiContext::new(cpi_program.clone(), transfer_accounts);
-        
-        token::transfer(transfer_ctx, transfer_amount)?;
-        
-        // Transfer fee to fee account
-        if fee_amount > 0 {
-            let fee_transfer_accounts = Transfer {
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+
+        token_2022::transfer(cpi_ctx, transfer_amount)?;
+
+        // Transfer fee to fee collector (if provided)
+        if let Some(fee_collector) = &ctx.accounts.fee_collector {
+            let fee_cpi = token_2022::Transfer {
                 from: ctx.accounts.from.to_account_info(),
-                to: ctx.accounts.fee_account.to_account_info(),
-                authority: ctx.accounts.owner.to_account_info(),
+                to: fee_collector.to_account_info(),
+                authority: ctx.accounts.authority.to_account_info(),
             };
-            
-            let fee_transfer_ctx = CpiContext::new(cpi_program, fee_transfer_accounts);
-            token::transfer(fee_transfer_ctx, fee_amount)?;
+            let fee_ctx = CpiContext::new(ctx.accounts.token_program.to_account_info(), fee_cpi);
+            token_2022::transfer(fee_ctx, fee_amount)?;
         }
-        
-        msg!("Transferred {} tokens with {} fee", transfer_amount, fee_amount);
-        
+
+        emit!(TransferCompleted {
+            from: ctx.accounts.from.key(),
+            to: ctx.accounts.to.key(),
+            amount: transfer_amount,
+            fee: fee_amount,
+        });
+
+        Ok(())
+    }
+
+    // Emergency pause (authority only)
+    pub fn pause_contract(ctx: Context<AuthorityAction>) -> Result<()> {
+        let config = &mut ctx.accounts.config;
+        config.is_paused = true;
+        msg!("Contract paused by authority");
+        Ok(())
+    }
+
+    // Resume contract (authority only)
+    pub fn resume_contract(ctx: Context<AuthorityAction>) -> Result<()> {
+        let config = &mut ctx.accounts.config;
+        config.is_paused = false;
+        msg!("Contract resumed by authority");
         Ok(())
     }
 }
 
+// Account Structures - Updated for Token-2022
 #[derive(Accounts)]
 pub struct Initialize<'info> {
-    #[account(mut)]
-    pub authority: Signer<'info>,
-    
-    pub mint: Account<'info, Mint>,
-    
-    pub reserve_mint: Account<'info, Mint>,
-    
     #[account(
         init,
-        payer = authority,
-        space = 8 + 32 + 32 + 32 + 1 + 4 + (MAX_PRICE_HISTORY * 8) + 4 + (MAX_PRICE_HISTORY * 8) + 8 + 1 + 1,
-        seeds = [b"state", mint.key().as_ref()],
+        payer = payer,
+        space = 8 + ConfigAccount::INIT_SPACE,
+        seeds = [b"config"],
         bump
     )]
-    pub state: Account<'info, AnupamCoinState>,
-    
+    pub config: Account<'info, ConfigAccount>,
+    pub mint: InterfaceAccount<'info, Mint>, // Use InterfaceAccount for Token-2022 compatibility
+    #[account(mut)]
+    pub payer: Signer<'info>,
     pub system_program: Program<'info, System>,
-    pub token_program: Program<'info, Token>,
-    pub rent: Sysvar<'info, Rent>,
+    pub token_program: Interface<'info, TokenInterface>,
 }
 
 #[derive(Accounts)]
 pub struct UpdatePrice<'info> {
-    #[account(mut)]
-    pub authority: Signer<'info>,
-    
     #[account(
         mut,
-        seeds = [b"state", state.mint.as_ref()],
-        bump = state.bump
+        seeds = [b"config"],
+        bump,
+        has_one = authority
     )]
-    pub state: Account<'info, AnupamCoinState>,
-}
-
-#[derive(Accounts)]
-pub struct UpdateReserveRatio<'info> {
-    #[account(mut)]
+    pub config: Account<'info, ConfigAccount>,
     pub authority: Signer<'info>,
-    
-    #[account(
-        mut,
-        seeds = [b"state", state.mint.as_ref()],
-        bump = state.bump
-    )]
-    pub state: Account<'info, AnupamCoinState>,
 }
 
 #[derive(Accounts)]
 pub struct MintTokens<'info> {
+    #[account(
+        seeds = [b"config"],
+        bump,
+        has_one = mint
+    )]
+    pub config: Account<'info, ConfigAccount>,
     #[account(mut)]
-    pub authority: Signer<'info>,
-    
-    #[account(
-        seeds = [b"state", mint.key().as_ref()],
-        bump = state.bump
-    )]
-    pub state: Account<'info, AnupamCoinState>,
-    
-    #[account(
-        mut,
-        address = state.mint
-    )]
-    pub mint: Account<'info, Mint>,
-    
-    #[account(
-        mut,
-        associated_token::mint = mint,
-        associated_token::authority = recipient
-    )]
-    pub token_account: Account<'info, TokenAccount>,
-    
-    /// CHECK: Not reading from this account
-    pub recipient: AccountInfo<'info>,
-    
-    pub token_program: Program<'info, Token>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>,
+    pub mint: InterfaceAccount<'info, Mint>,
+    #[account(mut)]
+    pub destination: InterfaceAccount<'info, TokenAccount>,
+    pub token_program: Interface<'info, TokenInterface>,
 }
 
 #[derive(Accounts)]
 pub struct BurnTokens<'info> {
-    pub owner: Signer<'info>,
-    
     #[account(
-        mut,
-        address = state.mint
+        seeds = [b"config"],
+        bump,
+        has_one = mint
     )]
-    pub mint: Account<'info, Mint>,
-    
-    #[account(
-        mut,
-        associated_token::mint = mint,
-        associated_token::authority = owner
-    )]
-    pub token_account: Account<'info, TokenAccount>,
-    
-    #[account(
-        seeds = [b"state", mint.key().as_ref()],
-        bump = state.bump
-    )]
-    pub state: Account<'info, AnupamCoinState>,
-    
-    pub token_program: Program<'info, Token>,
+    pub config: Account<'info, ConfigAccount>,
+    #[account(mut)]
+    pub mint: InterfaceAccount<'info, Mint>,
+    #[account(mut)]
+    pub source: InterfaceAccount<'info, TokenAccount>,
+    pub user: Signer<'info>,
+    pub token_program: Interface<'info, TokenInterface>,
 }
 
 #[derive(Accounts)]
-pub struct TransferTokens<'info> {
-    pub owner: Signer<'info>,
-    
+pub struct TransferWithFee<'info> {
+    #[account(
+        seeds = [b"config"],
+        bump
+    )]
+    pub config: Account<'info, ConfigAccount>,
+    #[account(mut)]
+    pub from: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub to: InterfaceAccount<'info, TokenAccount>,
+    /// CHECK: Optional fee collector account
+    #[account(mut)]
+    pub fee_collector: Option<InterfaceAccount<'info, TokenAccount>>,
+    pub authority: Signer<'info>,
+    pub token_program: Interface<'info, TokenInterface>,
+}
+
+#[derive(Accounts)]
+pub struct AuthorityAction<'info> {
     #[account(
         mut,
-        constraint = from.owner == owner.key() @ AnupamCoinError::Unauthorized
+        seeds = [b"config"],
+        bump,
+        has_one = authority
     )]
-    pub from: Account<'info, TokenAccount>,
-    
-    #[account(mut)]
-    pub to: Account<'info, TokenAccount>,
-    
-    #[account(mut)]
-    pub fee_account: Account<'info, TokenAccount>,
-    
-    pub token_program: Program<'info, Token>,
+    pub config: Account<'info, ConfigAccount>,
+    pub authority: Signer<'info>,
 }
 
+// Simplified Configuration for Sprint 1
 #[account]
-pub struct AnupamCoinState {
-    pub authority: Pubkey,          // Authority that can mint, update prices, etc.
-    pub mint: Pubkey,               // The token mint address
-    pub reserve_mint: Pubkey,       // Reserve asset mint address
-    pub reserve_ratio: u8,          // Reserve ratio in percentage (e.g. 110 for 110%)
-    pub price_history: Vec<u64>,    // Price history with 8 decimal places
-    pub price_timestamp_history: Vec<i64>, // Timestamps for price entries
-    pub latest_price: u64,          // Latest price
-    pub days_above_threshold: u8,   // Number of consecutive days above threshold
-    pub bump: u8,                   // PDA bump
+#[derive(InitSpace)]
+pub struct ConfigAccount {
+    pub authority: Pubkey,
+    pub mint: Pubkey,
+    pub target_price: u64,     // $1.05 in micro-dollars
+    pub current_price: u64,    // Current price
+    pub transfer_fee_bps: u16, // 30 = 0.3%
+    pub is_paused: bool,
+    pub price_above_target_since: i64, // Timestamp when price first went above target
+    pub consecutive_days_above_target: u8, // Days price has been above target
 }
 
+// Events
+#[event]
+pub struct PriceUpdated {
+    pub price: u64,
+    pub consecutive_days_above_target: u8,
+}
+
+#[event]
+pub struct TokensMinted {
+    pub amount: u64,
+    pub recipient: Pubkey,
+}
+
+#[event]
+pub struct TokensBurned {
+    pub amount: u64,
+    pub user: Pubkey,
+}
+
+#[event]
+pub struct TransferCompleted {
+    pub from: Pubkey,
+    pub to: Pubkey,
+    pub amount: u64,
+    pub fee: u64,
+}
+
+// Error Codes
 #[error_code]
-pub enum AnupamCoinError {
-    #[msg("You are not authorized to perform this action")]
-    Unauthorized,
-    
-    #[msg("Price conditions not met for minting")]
-    PriceConditionNotMet,
-    
-    #[msg("Insufficient reserve ratio for minting")]
-    InsufficientReserveRatio,
-    
-    #[msg("Unauthorized price update")]
-    UnauthorizedPriceUpdate,
-    
-    #[msg("Invalid price data")]
-    InvalidPriceData,
-    
-    #[msg("Arithmetic error")]
-    ArithmeticError,
+pub enum ErrorCode {
+    #[msg("Contract is currently paused")]
+    ContractPaused,
+    #[msg("Current price is below target price of $1.05")]
+    PriceBelowTarget,
+    #[msg("Price must stay above $1.05 for 7 consecutive days")]
+    TimeRequirementNotMet,
 }

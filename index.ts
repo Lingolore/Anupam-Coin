@@ -4,11 +4,13 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import contractRoutes from './src/routes/routes';
 // import routes from './routes';
 // import { errorHandler, notFoundHandler } from './middleware/errorMiddleware';
 
 // Load environment variables
 dotenv.config();
+
 
 // Initialize express app
 const app = express();
@@ -42,6 +44,9 @@ app.use(morgan('combined'));
 // app.use('/api', routes);
 
 // Health check endpoint
+
+
+app.use('/api/contract', contractRoutes);
 app.get('/health', (req, res) => {
 res.status(200).json({
     status: 'success',

@@ -1,19 +1,44 @@
-[toolchain]
-package_manager = "yarn"
-
 [features]
 resolution = true
 skip-lint = false
 
-[programs.localnet]
-anupam_coin = "6qSoMSj9qsZW3LHCLDgnC6DY8SQbTEUpyryEDztW9EzX"
+
+
+[programs.Devnet]
+anupam_coin_wrapper = "5M1WF8DeM42GCzdzm2AN7DQb8sFctqDXTEpnEyr5oqr9"
+
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
-wallet = "admin.json"
+cluster = "Devnet"
+wallet = "./admin.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[test]
+startup_wait = 5000
+shutdown_wait = 2000
+upgradeable = false
+
+[[test.genesis]]
+address = "AC91YcgQBPpAi4zszL3ahhdjBdATbRuTP1bgYqRYHoba"
+program = "target/deploy/anupam_coin_wrapper.so"
+
+[test.validator]
+url = "https://api.devnet.solana.com"
+ledger = ".anchor/test-ledger"
+bind_address = "0.0.0.0"
+rpc_port = 8899
+websocket_port = 8900
+startup_wait = 5000
+
+[[test.validator.account]]
+address = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+filename = "spl_token-3.5.0.so"
+
+[[test.validator.account]]
+address = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+filename = "spl_token_2022-0.6.1.so"
