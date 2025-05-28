@@ -6,11 +6,6 @@ import { WalletProvider } from "@/contexts/wallet-context"
 
 const inter = Inter({ subsets: ["latin"] })
 
-export const metadata: Metadata = {
-  title: "Anupam Coin Dashboard",
-  description: "Dynamic Reserve-Backed SPL Token Management",
-    generator: 'v0.dev'
-}
 
 export default function RootLayout({
   children,

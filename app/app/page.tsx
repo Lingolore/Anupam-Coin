@@ -113,7 +113,6 @@ export default function AnupamCoinDashboard() {
     categories.forEach(category => {
       if (apiData.data[category] && Array.isArray(apiData.data[category])) {
         apiData.data[category].forEach((item: any) => {
-          // Extract the base symbol (e.g., "BTC" from "BTC/USD")
           const baseSymbol = item.symbol.split('/')[0];
           
           // Skip USDC
@@ -133,11 +132,8 @@ export default function AnupamCoinDashboard() {
     setPriceError(null);
     
     try {
-      // Call fetchData and wait for the result to be available in the `data` state
       await fetchData("/api/contract/prices", "GET");
-      
-      // Note: Since fetchData updates the `data` state, we need to handle the response
-      // in a useEffect that watches for changes to the `data` state
+    
     } catch (err: any) {
       console.error("Error fetching price data:", err);
       setPriceError(err.message || "Failed to fetch price data");
