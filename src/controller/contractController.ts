@@ -114,7 +114,7 @@ export const transferWithFee = async (req: Request, res: Response) => {
         config: configPda,
         from: new anchor.web3.PublicKey(from),
         to: new anchor.web3.PublicKey(to),
-        feeCollector: feeCollector ? new anchor.web3.PublicKey(feeCollector) : null,
+        feeCollector: feeCollector || null,
         authority: new anchor.web3.PublicKey(authority),
         tokenProgram: TOKEN_2022_PROGRAM_ID,
       })

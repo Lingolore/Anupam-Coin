@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token_2022::{self, Burn, MintTo};
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface}; // These come from token_interface
 
-declare_id!("HonmKmKytc7c8o3gZrncVE183LVYdc6oCw7MfT1d1CHc");
+declare_id!("GamLA4fb39hTGRJbTKD2WQKRAEms7ziGfRGhF82JhuKf");
 
 #[program]
 pub mod anupam_coin_wrapper {

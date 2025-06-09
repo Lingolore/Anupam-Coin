@@ -1,9 +1,8 @@
 import * as anchor from "@coral-xyz/anchor";
 // import { AnupamCoinWrapper } from "../../target/types/anupam_coin_wrapper";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import wallet from "../../admin.json"; // load your local test wallet
 
-const keypair = anchor.web3.Keypair.fromSecretKey(new Uint8Array(wallet));
+const keypair = anchor.web3.Keypair.fromSecretKey(new Uint8Array());
 const connection = new anchor.web3.Connection("https://api.devnet.solana.com");
 const provider :any  = new anchor.AnchorProvider(connection, new anchor.Wallet(keypair), {});
 anchor.setProvider(provider);
