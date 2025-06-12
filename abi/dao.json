@@ -1,0 +1,622 @@
+{
+  "version": "0.1.0",
+  "name": "governance",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        { "name": "governanceConfig", "isMut": true, "isSigner": false },
+        { "name": "apmMint", "isMut": true, "isSigner": false },
+        { "name": "authority", "isMut": true, "isSigner": true },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [{ "name": "daoDurationSeconds", "type": "i64" }]
+    },
+    {
+      "name": "updateConfig",
+      "accounts": [
+        { "name": "governanceConfig", "isMut": true, "isSigner": false },
+        { "name": "authority", "isMut": false, "isSigner": true }
+      ],
+      "args": [{ "name": "newDaoDurationSeconds", "type": { "option": "i64" } }]
+    },
+    {
+      "name": "updateProposalEndtime",
+      "accounts": [
+        { "name": "proposal", "isMut": true, "isSigner": false },
+        { "name": "governanceConfig", "isMut": false, "isSigner": false },
+        { "name": "authority", "isMut": false, "isSigner": true }
+      ],
+      "args": [{ "name": "newVotingDurationSeconds", "type": "i64" }]
+    },
+    {
+      "name": "addProposalCreator",
+      "accounts": [
+        { "name": "governanceConfig", "isMut": true, "isSigner": false },
+        { "name": "authority", "isMut": false, "isSigner": true }
+      ],
+      "args": [{ "name": "creatorToAdd", "type": "publicKey" }]
+    },
+    {
+      "name": "removeProposalCreator",
+      "accounts": [
+        { "name": "governanceConfig", "isMut": true, "isSigner": false },
+        { "name": "authority", "isMut": false, "isSigner": true }
+      ],
+      "args": [{ "name": "creatorToRemove", "type": "publicKey" }]
+    },
+    {
+      "name": "createProposal",
+      "accounts": [
+        { "name": "proposal", "isMut": true, "isSigner": true },
+        { "name": "governanceConfig", "isMut": true, "isSigner": false },
+        { "name": "voteRecord", "isMut": true, "isSigner": true },
+        { "name": "authority", "isMut": true, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "title", "type": "string" },
+        { "name": "description", "type": "string" },
+        { "name": "votingDurationSeconds", "type": "i64" },
+        { "name": "category", "type": { "defined": "ProposalCategory" } },
+        { "name": "maxVoters", "type": "u64" },
+        { "name": "transferFeeBasisPoints", "type": { "option": "u16" } },
+        { "name": "treasurySourceWallet", "type": { "option": "publicKey" } },
+        {
+          "name": "treasuryDestinationWallet",
+          "type": { "option": "publicKey" }
+        },
+        { "name": "treasuryMintWallet", "type": { "option": "publicKey" } },
+        { "name": "emergencyPauseDuration", "type": { "option": "i64" } },
+        { "name": "treasureAmount", "type": "u64" }
+      ]
+    },
+    {
+      "name": "castVote",
+      "accounts": [
+        { "name": "proposal", "isMut": true, "isSigner": false },
+        { "name": "governanceConfig", "isMut": false, "isSigner": false },
+        { "name": "voteRecord", "isMut": true, "isSigner": false },
+        { "name": "voter", "isMut": true, "isSigner": true }
+      ],
+      "args": [{ "name": "vote", "type": "bool" }]
+    },
+    {
+      "name": "executeProposal",
+      "accounts": [
+        { "name": "proposal", "isMut": true, "isSigner": false },
+        { "name": "governanceConfig", "isMut": true, "isSigner": false },
+        { "name": "voteRecord", "isMut": true, "isSigner": false },
+        { "name": "authority", "isMut": true, "isSigner": true },
+        { "name": "treasuryConfig", "isMut": true, "isSigner": false },
+        { "name": "treasuryWallet", "isMut": true, "isSigner": false },
+        { "name": "treasuryWalletSwap", "isMut": true, "isSigner": false },
+        { "name": "allocatedTreasuryWallet", "isMut": true, "isSigner": false },
+        { "name": "apmMint", "isMut": true, "isSigner": false },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": []
+    },
+    {
+      "name": "cancelProposal",
+      "accounts": [
+        { "name": "proposal", "isMut": true, "isSigner": false },
+        { "name": "governanceConfig", "isMut": true, "isSigner": false },
+        { "name": "voteRecord", "isMut": true, "isSigner": false },
+        { "name": "signer", "isMut": true, "isSigner": true }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "GovernanceConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "apmMint", "type": "publicKey" },
+          { "name": "proposalCount", "type": "u64" },
+          { "name": "activeProposals", "type": "u64" },
+          { "name": "authority", "type": "publicKey" },
+          { "name": "daoEndTime", "type": "i64" },
+          { "name": "proposalCreatorWhitelist", "type": { "vec": "publicKey" } }
+        ]
+      }
+    },
+    {
+      "name": "Proposal",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "proposalId", "type": "u64" },
+          { "name": "title", "type": "string" },
+          { "name": "description", "type": "string" },
+          { "name": "startTime", "type": "i64" },
+          { "name": "endTime", "type": "i64" },
+          { "name": "forVotes", "type": "u64" },
+          { "name": "againstVotes", "type": "u64" },
+          { "name": "executed", "type": "bool" },
+          { "name": "isActive", "type": "bool" },
+          { "name": "createdBy", "type": "publicKey" },
+          { "name": "executedBy", "type": { "option": "publicKey" } },
+          { "name": "executedAt", "type": { "option": "i64" } },
+          {
+            "name": "proposalCategory",
+            "type": { "defined": "ProposalCategory" }
+          },
+          { "name": "treasureAmount", "type": "u64" },
+          { "name": "maxVoters", "type": "u64" },
+          { "name": "currentVoters", "type": "u64" },
+          { "name": "voteRecord", "type": "publicKey" },
+          { "name": "transferFeeBasisPoints", "type": { "option": "u16" } },
+          { "name": "treasurySourceWallet", "type": { "option": "publicKey" } },
+          {
+            "name": "treasuryDestinationWallet",
+            "type": { "option": "publicKey" }
+          },
+          { "name": "treasuryMintWallet", "type": { "option": "publicKey" } },
+          { "name": "emergencyPauseDuration", "type": { "option": "i64" } }
+        ]
+      }
+    },
+    {
+      "name": "VoteRecord",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "proposalId", "type": "u64" },
+          { "name": "totalForVotes", "type": "u64" },
+          { "name": "totalAgainstVotes", "type": "u64" },
+          { "name": "totalVoters", "type": "u64" },
+          { "name": "voters", "type": { "vec": "publicKey" } },
+          { "name": "voteTypes", "type": { "vec": "bool" } }
+        ]
+      }
+    },
+    {
+      "name": "TreasuryConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "treasuryWallet", "type": "publicKey" },
+          { "name": "lastMintTimestamp", "type": "i64" },
+          { "name": "totalMinted", "type": "u64" },
+          { "name": "authority", "type": "publicKey" }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "ProposalCategory",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "EmergencyCircuitBreaker" },
+          { "name": "TreasuryFundMove" },
+          { "name": "YearlyCap" },
+          { "name": "TransferFee" }
+        ]
+      }
+    }
+  ],
+  "events": [
+    {
+      "name": "GovernanceConfigInitialized",
+      "fields": [
+        { "name": "authority", "type": "publicKey", "index": false },
+        { "name": "apmMint", "type": "publicKey", "index": false },
+        { "name": "daoEndTime", "type": "i64", "index": false },
+        { "name": "timestamp", "type": "i64", "index": false }
+      ]
+    },
+    {
+      "name": "ConfigUpdated",
+      "fields": [
+        { "name": "updatedBy", "type": "publicKey", "index": false },
+        { "name": "daoEndTime", "type": "i64", "index": false },
+        { "name": "timestamp", "type": "i64", "index": false }
+      ]
+    },
+    {
+      "name": "ProposalCreated",
+      "fields": [
+        { "name": "proposalId", "type": "u64", "index": false },
+        {
+          "name": "category",
+          "type": { "defined": "ProposalCategory" },
+          "index": false
+        },
+        { "name": "title", "type": "string", "index": false },
+        { "name": "description", "type": "string", "index": false },
+        { "name": "createdBy", "type": "publicKey", "index": false },
+        { "name": "startTime", "type": "i64", "index": false },
+        { "name": "endTime", "type": "i64", "index": false },
+        { "name": "maxVoters", "type": "u64", "index": false },
+        {
+          "name": "transferFeeBasisPoints",
+          "type": { "option": "u16" },
+          "index": false
+        },
+        {
+          "name": "treasurySourceWallet",
+          "type": { "option": "publicKey" },
+          "index": false
+        },
+        {
+          "name": "treasuryDestinationWallet",
+          "type": { "option": "publicKey" },
+          "index": false
+        },
+        {
+          "name": "treasuryMintWallet",
+          "type": { "option": "publicKey" },
+          "index": false
+        },
+        { "name": "treasureAmount", "type": "u64", "index": false },
+        {
+          "name": "emergencyPauseDuration",
+          "type": { "option": "i64" },
+          "index": false
+        },
+        { "name": "timestamp", "type": "i64", "index": false }
+      ]
+    },
+    {
+      "name": "VoteCast",
+      "fields": [
+        { "name": "proposalId", "type": "u64", "index": false },
+        { "name": "voter", "type": "publicKey", "index": false },
+        { "name": "voteType", "type": "bool", "index": false },
+        { "name": "forVotes", "type": "u64", "index": false },
+        { "name": "againstVotes", "type": "u64", "index": false },
+        { "name": "currentVoters", "type": "u64", "index": false },
+        { "name": "timestamp", "type": "i64", "index": false }
+      ]
+    },
+    {
+      "name": "ProposalExecuted",
+      "fields": [
+        { "name": "proposalId", "type": "u64", "index": false },
+        {
+          "name": "category",
+          "type": { "defined": "ProposalCategory" },
+          "index": false
+        },
+        { "name": "forVotes", "type": "u64", "index": false },
+        { "name": "againstVotes", "type": "u64", "index": false },
+        { "name": "executedBy", "type": "publicKey", "index": false },
+        { "name": "executedAt", "type": "i64", "index": false }
+      ]
+    },
+    {
+      "name": "ProposalCancelled",
+      "fields": [
+        { "name": "proposalId", "type": "u64", "index": false },
+        { "name": "cancelledBy", "type": "publicKey", "index": false },
+        { "name": "timestamp", "type": "i64", "index": false }
+      ]
+    },
+    {
+      "name": "ProposalCreatorAdded",
+      "fields": [
+        { "name": "addedCreator", "type": "publicKey", "index": false },
+        { "name": "addedBy", "type": "publicKey", "index": false },
+        { "name": "timestamp", "type": "i64", "index": false }
+      ]
+    },
+    {
+      "name": "ProposalCreatorRemoved",
+      "fields": [
+        { "name": "removedCreator", "type": "publicKey", "index": false },
+        { "name": "removedBy", "type": "publicKey", "index": false },
+        { "name": "timestamp", "type": "i64", "index": false }
+      ]
+    },
+    {
+      "name": "TreasuryMinted",
+      "fields": [
+        { "name": "proposalId", "type": "u64", "index": false },
+        { "name": "mintAmount", "type": "u64", "index": false },
+        { "name": "treasuryWallet", "type": "publicKey", "index": false },
+        { "name": "totalMinted", "type": "u64", "index": false },
+        { "name": "timestamp", "type": "i64", "index": false }
+      ]
+    },
+    {
+      "name": "ProposalEndtimeUpdated",
+      "fields": [
+        { "name": "proposalId", "type": "u64", "index": false },
+        { "name": "oldEndTime", "type": "i64", "index": false },
+        { "name": "newEndTime", "type": "i64", "index": false },
+        { "name": "updatedBy", "type": "publicKey", "index": false },
+        { "name": "timestamp", "type": "i64", "index": false }
+      ]
+    },
+    {
+      "name": "TreasuryFundsMoved",
+      "fields": [
+        { "name": "proposalId", "type": "u64", "index": false },
+        { "name": "fromWallet", "type": "publicKey", "index": false },
+        { "name": "toWallet", "type": "publicKey", "index": false },
+        { "name": "amount", "type": "u64", "index": false },
+        { "name": "timestamp", "type": "i64", "index": false }
+      ]
+    },
+    {
+      "name": "AccountClosed",
+      "fields": [
+        { "name": "accountType", "type": "string", "index": false },
+        { "name": "accountKey", "type": "publicKey", "index": false },
+        { "name": "lamportsRefunded", "type": "u64", "index": false },
+        { "name": "refundedTo", "type": "publicKey", "index": false },
+        { "name": "proposalId", "type": { "option": "u64" }, "index": false },
+        { "name": "timestamp", "type": "i64", "index": false }
+      ]
+    },
+    {
+      "name": "TransferFeeUpdated",
+      "fields": [
+        { "name": "proposalId", "type": "u64", "index": false },
+        { "name": "mint", "type": "publicKey", "index": false },
+        { "name": "transferFeeBasisPoints", "type": "u16", "index": false },
+        { "name": "maximumFee", "type": "u64", "index": false },
+        { "name": "authority", "type": "publicKey", "index": false },
+        { "name": "timestamp", "type": "i64", "index": false }
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "DaoDurationTooShort",
+      "msg": "DAO duration must be at least 1 day"
+    },
+    {
+      "code": 6001,
+      "name": "DaoDurationTooLong",
+      "msg": "DAO duration cannot exceed 1 year"
+    },
+    {
+      "code": 6002,
+      "name": "MaxVotersExceeded",
+      "msg": "Maximum voters per proposal cannot exceed 1000"
+    },
+    {
+      "code": 6003,
+      "name": "MaxActiveProposalsExceeded",
+      "msg": "Maximum active proposals cannot exceed 10"
+    },
+    { "code": 6004, "name": "DaoExpired", "msg": "DAO has expired" },
+    {
+      "code": 6005,
+      "name": "UnauthorizedUpdate",
+      "msg": "Unauthorized to update configuration"
+    },
+    {
+      "code": 6006,
+      "name": "CreatorAlreadyWhitelisted",
+      "msg": "Creator is already whitelisted"
+    },
+    {
+      "code": 6007,
+      "name": "CreatorNotWhitelisted",
+      "msg": "Creator is not whitelisted"
+    },
+    {
+      "code": 6008,
+      "name": "CannotRemoveLastCreator",
+      "msg": "Cannot remove the last creator from whitelist"
+    },
+    {
+      "code": 6009,
+      "name": "VotingDurationTooShort",
+      "msg": "Voting duration must be at least 1 hour"
+    },
+    {
+      "code": 6010,
+      "name": "VotingDurationTooLong",
+      "msg": "Voting duration cannot exceed 30 days"
+    },
+    {
+      "code": 6011,
+      "name": "TitleTooLong",
+      "msg": "Title is too long (max 50 characters)"
+    },
+    {
+      "code": 6012,
+      "name": "DescriptionTooLong",
+      "msg": "Description is too long (max 500 characters)"
+    },
+    {
+      "code": 6013,
+      "name": "TooManyVoters",
+      "msg": "Too many voters specified for this proposal"
+    },
+    {
+      "code": 6014,
+      "name": "TooManyActiveProposals",
+      "msg": "Too many active proposals (max 10)"
+    },
+    {
+      "code": 6015,
+      "name": "InvalidProposalCategory",
+      "msg": "Invalid proposal category"
+    },
+    {
+      "code": 6016,
+      "name": "ProposalNotActive",
+      "msg": "Proposal is not active"
+    },
+    {
+      "code": 6017,
+      "name": "InvalidVotingTime",
+      "msg": "Invalid voting time window"
+    },
+    {
+      "code": 6018,
+      "name": "VoterNotWhitelisted",
+      "msg": "Voter is not whitelisted"
+    },
+    {
+      "code": 6019,
+      "name": "AlreadyVoted",
+      "msg": "Already voted on this proposal"
+    },
+    {
+      "code": 6020,
+      "name": "MaxVotersReached",
+      "msg": "Maximum voters reached for this proposal"
+    },
+    {
+      "code": 6021,
+      "name": "VotingOverflow",
+      "msg": "Voting calculation overflow"
+    },
+    {
+      "code": 6022,
+      "name": "InsufficientTokens",
+      "msg": "Insufficient tokens to vote"
+    },
+    {
+      "code": 6023,
+      "name": "VotingStillActive",
+      "msg": "Voting is still active"
+    },
+    {
+      "code": 6024,
+      "name": "ProposalAlreadyExecuted",
+      "msg": "Proposal has already been executed"
+    },
+    {
+      "code": 6025,
+      "name": "ProposalNotPassed",
+      "msg": "Proposal did not pass"
+    },
+    {
+      "code": 6026,
+      "name": "AccountCloseOverflow",
+      "msg": "Account close operation overflow"
+    },
+    {
+      "code": 6027,
+      "name": "UnauthorizedCancel",
+      "msg": "Unauthorized to cancel proposal"
+    },
+    { "code": 6028, "name": "InvalidVoteRecord", "msg": "Invalid vote record" },
+    {
+      "code": 6029,
+      "name": "InvalidTokenAccount",
+      "msg": "Invalid token account"
+    },
+    { "code": 6030, "name": "InvalidTokenOwner", "msg": "Invalid token owner" },
+    {
+      "code": 6031,
+      "name": "YearlyCapNotReached",
+      "msg": "Yearly cap period not reached yet"
+    },
+    {
+      "code": 6032,
+      "name": "MintCalculationOverflow",
+      "msg": "Mint calculation overflow"
+    },
+    {
+      "code": 6033,
+      "name": "InvalidTreasuryMint",
+      "msg": "Invalid treasury mint - treasury wallet must be for the APM token"
+    },
+    { "code": 6034, "name": "InvalidMintAmount", "msg": "Invalid mint amount" },
+    {
+      "code": 6035,
+      "name": "InvalidMintAuthority",
+      "msg": "Governance config must be the mint authority"
+    },
+    {
+      "code": 6036,
+      "name": "MissingTreasuryConfig",
+      "msg": "Treasury config account is required for YearlyCap proposals"
+    },
+    {
+      "code": 6037,
+      "name": "MissingTreasuryWallet",
+      "msg": "Treasury wallet account is required for YearlyCap proposals"
+    },
+    {
+      "code": 6038,
+      "name": "MissingTreasuryWalletSwap",
+      "msg": "Treasury wallet swap account is required for TreasuryFundMove proposals"
+    },
+    {
+      "code": 6039,
+      "name": "MissingAllocatedTreasuryWallet",
+      "msg": "Allocated treasury wallet account is required for TreasuryFundMove proposals"
+    },
+    {
+      "code": 6040,
+      "name": "NoFundsToTransfer",
+      "msg": "No funds available to transfer"
+    },
+    {
+      "code": 6041,
+      "name": "InvalidTransferFeeParams",
+      "msg": "Invalid transfer fee parameters in proposal description"
+    },
+    {
+      "code": 6042,
+      "name": "InvalidTransferFeeAuthority",
+      "msg": "Invalid transfer fee authority"
+    },
+    {
+      "code": 6043,
+      "name": "NoTransferFeeExtension",
+      "msg": "Mint does not have transfer fee extension"
+    },
+    {
+      "code": 6044,
+      "name": "InvalidFeeRate",
+      "msg": "Invalid fee rate - must be between 0 and 10000 basis points"
+    },
+    {
+      "code": 6045,
+      "name": "TransferFeeRequired",
+      "msg": "Transfer fee is required for TransferFee proposals"
+    },
+    {
+      "code": 6046,
+      "name": "TransferFeeNotAllowedForCategory",
+      "msg": "Transfer fee not allowed for this proposal category"
+    },
+    {
+      "code": 6047,
+      "name": "TransferFeeOutOfRange",
+      "msg": "Transfer fee must be between 0.5% (50 bp) and 1% (100 bp)"
+    },
+    {
+      "code": 6048,
+      "name": "InvalidParametersForCategory",
+      "msg": "Invalid parameters provided for this proposal category"
+    },
+    {
+      "code": 6049,
+      "name": "TreasuryWalletsRequired",
+      "msg": "Treasury source and destination wallets are required for TreasuryFundMove proposals"
+    },
+    {
+      "code": 6050,
+      "name": "SameSourceAndDestination",
+      "msg": "Source and destination wallets cannot be the same"
+    },
+    {
+      "code": 6051,
+      "name": "TreasuryMintWalletRequired",
+      "msg": "Treasury mint wallet is required for YearlyCap proposals"
+    },
+    {
+      "code": 6052,
+      "name": "InvalidEmergencyDuration",
+      "msg": "Emergency pause duration must be between 1 hour and 30 days"
+    }
+  ]
+}
