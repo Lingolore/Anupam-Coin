@@ -1,0 +1,1320 @@
+{
+    "version": "0.1.0",
+    "name": "apm_swap",
+    "instructions": [
+        {
+            "name": "initializeState",
+            "accounts": [
+                {
+                    "name": "state",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "authority",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "apmMint",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "apmMintAuthority",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "treasuryAuthority",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "token2022Program",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": [
+                {
+                    "name": "initialFeeBps",
+                    "type": "u16"
+                }
+            ]
+        },
+        {
+            "name": "transferApmAuthorityToOwner",
+            "accounts": [
+                {
+                    "name": "state",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "authority",
+                    "isMut": false,
+                    "isSigner": true
+                },
+                {
+                    "name": "apmMintAuthority",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "apmMint",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "token2022Program",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": []
+        },
+        {
+            "name": "updatePriceExpiration",
+            "accounts": [
+                {
+                    "name": "state",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "authority",
+                    "isMut": false,
+                    "isSigner": true
+                }
+            ],
+            "args": []
+        },
+        {
+            "name": "updateSwapFee",
+            "accounts": [
+                {
+                    "name": "state",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "authority",
+                    "isMut": false,
+                    "isSigner": true
+                }
+            ],
+            "args": [
+                {
+                    "name": "newFeeBps",
+                    "type": "u16"
+                }
+            ]
+        },
+        {
+            "name": "initializeSplFeeWallets",
+            "accounts": [
+                {
+                    "name": "state",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "authority",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "feeAuthority",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdcFeeWallet",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdtFeeWallet",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdcMint",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdtMint",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "tokenProgram",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": []
+        },
+        {
+            "name": "initializeToken2022FeeWallet",
+            "accounts": [
+                {
+                    "name": "state",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "authority",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "feeAuthority",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "apmFeeWallet",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "apmMint",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "token2022Program",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": []
+        },
+        {
+            "name": "initializeSplTreasuries",
+            "accounts": [
+                {
+                    "name": "state",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "authority",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "treasuryAuthority",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdcTreasury",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdtTreasury",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdcMint",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdtMint",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "systemProgram",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "tokenProgram",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": []
+        },
+        {
+            "name": "fundSplTreasuries",
+            "accounts": [
+                {
+                    "name": "state",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "authority",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "authorityUsdcAccount",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "authorityUsdtAccount",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdcMint",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdtMint",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdcTreasury",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdtTreasury",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "tokenProgram",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": [
+                {
+                    "name": "usdcAmount",
+                    "type": "u64"
+                },
+                {
+                    "name": "usdtAmount",
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "updatePrices",
+            "accounts": [
+                {
+                    "name": "state",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "authority",
+                    "isMut": false,
+                    "isSigner": true
+                }
+            ],
+            "args": [
+                {
+                    "name": "usdcPrice",
+                    "type": "u64"
+                },
+                {
+                    "name": "usdtPrice",
+                    "type": "u64"
+                },
+                {
+                    "name": "apmPrice",
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "swapToApm",
+            "accounts": [
+                {
+                    "name": "state",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "user",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "userInputAccount",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "userApmAccount",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdcFeeWallet",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdtFeeWallet",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "apmMintAuthority",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdcMint",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdtMint",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "apmMint",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdcTreasury",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdtTreasury",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "tokenProgram",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "token2022Program",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": [
+                {
+                    "name": "amount",
+                    "type": "u64"
+                },
+                {
+                    "name": "tokenType",
+                    "type": "u8"
+                }
+            ]
+        },
+        {
+            "name": "swapFromApm",
+            "accounts": [
+                {
+                    "name": "state",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "user",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "userApmAccount",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "userOutputAccount",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdcFeeWallet",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdtFeeWallet",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdcMint",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdtMint",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "apmMint",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdcTreasury",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "usdtTreasury",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "treasuryAuthority",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "tokenProgram",
+                    "isMut": false,
+                    "isSigner": false
+                },
+                {
+                    "name": "token2022Program",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": [
+                {
+                    "name": "amount",
+                    "type": "u64"
+                },
+                {
+                    "name": "outputToken",
+                    "type": "u8"
+                }
+            ]
+        },
+        {
+            "name": "getSwapPrices",
+            "accounts": [
+                {
+                    "name": "state",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": [
+                {
+                    "name": "inputAmount",
+                    "type": "u64"
+                },
+                {
+                    "name": "swapType",
+                    "type": "u8"
+                }
+            ]
+        }
+    ],
+    "accounts": [
+        {
+            "name": "SwapState",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "authority",
+                        "type": "publicKey"
+                    },
+                    {
+                        "name": "apmMintAuthority",
+                        "type": "publicKey"
+                    },
+                    {
+                        "name": "usdcPrice",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "usdtPrice",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "apmPrice",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "swapFeeBps",
+                        "type": "u16"
+                    },
+                    {
+                        "name": "isInitialized",
+                        "type": "bool"
+                    },
+                    {
+                        "name": "priceUpdated",
+                        "type": "i64"
+                    },
+                    {
+                        "name": "currentStateActive",
+                        "type": "bool"
+                    },
+                    {
+                        "name": "usdcTotalDeposited",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "usdcTotalWithdrawn",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "usdtTotalDeposited",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "usdtTotalWithdrawn",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "apmTotalMinted",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "apmTotalBurned",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "totalSwapsExecuted",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "totalFeesCollectedUsdc",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "totalFeesCollectedUsdt",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "totalFeesCollectedApm",
+                        "type": "u64"
+                    }
+                ]
+            }
+        }
+    ],
+    "types": [
+        {
+            "name": "SwapType",
+            "type": {
+                "kind": "enum",
+                "variants": [
+                    {
+                        "name": "UsdtToApm"
+                    },
+                    {
+                        "name": "UsdcToApm"
+                    },
+                    {
+                        "name": "ApmToUsdc"
+                    },
+                    {
+                        "name": "ApmToUsdt"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "TokenType",
+            "type": {
+                "kind": "enum",
+                "variants": [
+                    {
+                        "name": "USDC"
+                    },
+                    {
+                        "name": "USDT"
+                    },
+                    {
+                        "name": "APM"
+                    }
+                ]
+            }
+        }
+    ],
+    "events": [
+        {
+            "name": "SwapPriceCalculated",
+            "fields": [
+                {
+                    "name": "swapType",
+                    "type": {
+                        "defined": "SwapType"
+                    },
+                    "index": false
+                },
+                {
+                    "name": "inputToken",
+                    "type": {
+                        "defined": "TokenType"
+                    },
+                    "index": false
+                },
+                {
+                    "name": "outputToken",
+                    "type": {
+                        "defined": "TokenType"
+                    },
+                    "index": false
+                },
+                {
+                    "name": "inputAmount",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "outputAmount",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "feeAmount",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "amountAfterFee",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "inputPrice",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "outputPrice",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "exchangeRate",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "priceImpactBps",
+                    "type": "u16",
+                    "index": false
+                },
+                {
+                    "name": "swapFeeBps",
+                    "type": "u16",
+                    "index": false
+                },
+                {
+                    "name": "timestamp",
+                    "type": "i64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "SplTreasuriesInitialized",
+            "fields": [
+                {
+                    "name": "authority",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "usdcTreasury",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "usdtTreasury",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "timestamp",
+                    "type": "i64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "Token2022TreasuryInitialized",
+            "fields": [
+                {
+                    "name": "authority",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "apmTreasury",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "timestamp",
+                    "type": "i64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "TreasuryFunded",
+            "fields": [
+                {
+                    "name": "authority",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "tokenType",
+                    "type": {
+                        "defined": "TokenType"
+                    },
+                    "index": false
+                },
+                {
+                    "name": "amount",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "timestamp",
+                    "type": "i64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "PricesUpdated",
+            "fields": [
+                {
+                    "name": "usdcPrice",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "usdtPrice",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "apmPrice",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "timestamp",
+                    "type": "i64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "SwapFeeUpdated",
+            "fields": [
+                {
+                    "name": "authority",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "oldFeeBps",
+                    "type": "u16",
+                    "index": false
+                },
+                {
+                    "name": "newFeeBps",
+                    "type": "u16",
+                    "index": false
+                },
+                {
+                    "name": "timestamp",
+                    "type": "i64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "TokenTransferred",
+            "fields": [
+                {
+                    "name": "from",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "to",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "tokenType",
+                    "type": {
+                        "defined": "TokenType"
+                    },
+                    "index": false
+                },
+                {
+                    "name": "amount",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "timestamp",
+                    "type": "i64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "SplFeeWalletsInitialized",
+            "fields": [
+                {
+                    "name": "authority",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "usdcFeeWallet",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "usdtFeeWallet",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "timestamp",
+                    "type": "i64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "Token2022FeeWalletInitialized",
+            "fields": [
+                {
+                    "name": "authority",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "apmFeeWallet",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "timestamp",
+                    "type": "i64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "StateInitialized",
+            "fields": [
+                {
+                    "name": "authority",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "apmMintAuthority",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "treasuryAuthority",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "initialFeeBps",
+                    "type": "u16",
+                    "index": false
+                },
+                {
+                    "name": "timestamp",
+                    "type": "i64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "FeeCollected",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "tokenType",
+                    "type": {
+                        "defined": "TokenType"
+                    },
+                    "index": false
+                },
+                {
+                    "name": "feeAmount",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "totalFeesCollected",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "timestamp",
+                    "type": "i64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "TokenDeposited",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "tokenType",
+                    "type": {
+                        "defined": "TokenType"
+                    },
+                    "index": false
+                },
+                {
+                    "name": "amount",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "totalDeposited",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "timestamp",
+                    "type": "i64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "TokenWithdrawn",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "tokenType",
+                    "type": {
+                        "defined": "TokenType"
+                    },
+                    "index": false
+                },
+                {
+                    "name": "amount",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "totalWithdrawn",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "timestamp",
+                    "type": "i64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "TokenMinted",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "tokenType",
+                    "type": {
+                        "defined": "TokenType"
+                    },
+                    "index": false
+                },
+                {
+                    "name": "amount",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "totalMinted",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "timestamp",
+                    "type": "i64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "TokenBurned",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "tokenType",
+                    "type": {
+                        "defined": "TokenType"
+                    },
+                    "index": false
+                },
+                {
+                    "name": "amount",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "totalBurned",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "timestamp",
+                    "type": "i64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "SwapExecuted",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "swapId",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "inputToken",
+                    "type": {
+                        "defined": "TokenType"
+                    },
+                    "index": false
+                },
+                {
+                    "name": "inputAmount",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "outputToken",
+                    "type": {
+                        "defined": "TokenType"
+                    },
+                    "index": false
+                },
+                {
+                    "name": "outputAmount",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "inputPrice",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "outputPrice",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "feeAmount",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "amountAfterFee",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "exchangeRate",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "totalSwaps",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "timestamp",
+                    "type": "i64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "ApmAuthorityTransferred",
+            "fields": [
+                {
+                    "name": "from",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "to",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "timestamp",
+                    "type": "i64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "PriceExpirationUpdated",
+            "fields": [
+                {
+                    "name": "authority",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "newExpiration",
+                    "type": "i64",
+                    "index": false
+                },
+                {
+                    "name": "timestamp",
+                    "type": "i64",
+                    "index": false
+                }
+            ]
+        }
+    ],
+    "errors": [
+        {
+            "code": 6000,
+            "name": "Unauthorized",
+            "msg": "Unauthorized access"
+        },
+        {
+            "code": 6001,
+            "name": "NotInitialized",
+            "msg": "Contract not initialized"
+        },
+        {
+            "code": 6002,
+            "name": "InvalidAmount",
+            "msg": "Invalid amount"
+        },
+        {
+            "code": 6003,
+            "name": "InvalidPrice",
+            "msg": "Invalid price"
+        },
+        {
+            "code": 6004,
+            "name": "PriceNotSet",
+            "msg": "Price not set"
+        },
+        {
+            "code": 6005,
+            "name": "InsufficientOutput",
+            "msg": "Insufficient output amount"
+        },
+        {
+            "code": 6006,
+            "name": "InsufficientTreasuryBalance",
+            "msg": "Insufficient treasury balance"
+        },
+        {
+            "code": 6007,
+            "name": "InsufficientUserBalance",
+            "msg": "Insufficient user balance"
+        },
+        {
+            "code": 6008,
+            "name": "InvalidTokenType",
+            "msg": "Invalid token type"
+        },
+        {
+            "code": 6009,
+            "name": "InvalidTokenMint",
+            "msg": "Invalid token mint"
+        },
+        {
+            "code": 6010,
+            "name": "InvalidFee",
+            "msg": "Invalid fee - must be <= 1000 basis points (10%)"
+        },
+        {
+            "code": 6011,
+            "name": "InsufficientFeeBalance",
+            "msg": "Insufficient fee balance"
+        },
+        {
+            "code": 6012,
+            "name": "InvalidSwapType",
+            "msg": "Invalid swap type"
+        },
+        {
+            "code": 6013,
+            "name": "PricesExpired",
+            "msg": "Prices have expired - swaps are temporarily disabled"
+        }
+    ]
+}
