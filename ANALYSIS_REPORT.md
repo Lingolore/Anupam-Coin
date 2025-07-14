@@ -146,5 +146,5 @@ Unlike pure crypto investments, APM's diversified basket significantly reduces c
 
 **Prepared by:** APM Development Team  
 **Contact:** [Contact Information]  
-**Disclaimer:** This analysis is for informational purposes only and does not constitute investment advice.
+**Disclaimer:** This analysis is for informational purposes only 
 
