@@ -175,7 +175,7 @@ class SwapManager {
         this.alertCallbacks.forEach(callback => {
             try {
                 callback(status);
-            } catch (error:any) {
+            } catch (error: any) {
                 this.log('error', `Error in alert callback: ${error.message}`);
             }
         });

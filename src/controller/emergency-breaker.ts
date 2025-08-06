@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 
+// Types for circuit breaker system
 interface CircuitBreakerState {
     isActive: boolean;
     trigger: string;
@@ -60,7 +61,8 @@ interface CircuitBreakerConfig {
     // Auto-reset timers
     AUTO_RESET_DELAY: number;
     MANUAL_OVERRIDE_TIMEOUT: number;
-
+    
+    // Governance
     GOVERNANCE_ADDRESSES: string[];
     EMERGENCY_PAUSE_DURATION: number;
 }
