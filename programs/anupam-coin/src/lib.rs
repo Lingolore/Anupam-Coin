@@ -2,12 +2,18 @@ use anchor_lang::prelude::*;
 // For Token-2022, use these imports:
 use anchor_spl::token_2022::{self, Burn, MintTo};
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface}; // These come from token_interface
+// Add this import at the top with other imports
+use anchor_spl::token_2022::{
+    set_authority, spl_token_2022::instruction::AuthorityType, SetAuthority,
+};
 
-declare_id!("GamLA4fb39hTGRJbTKD2WQKRAEms7ziGfRGhF82JhuKf");
+declare_id!("E2cQ1N8qNcWT65bA3QNSTjMYjqa2dVXHwvd6FMZZL9JN");
 
-#[program]
-pub mod anupam_coin_wrapper {
-    use super::*;
+// Emergency Circuit Breaker Constants
+const CIRCUIT_BREAKER_THRESHOLD_BPS: u16 = 2500; // 25% volatility threshold
+const CIRCUIT_BREAKER_DURATION: i64 = 1800; // 30 minutes in seconds
+const MAX_FREEZE_DURATION: i64 = 14400; // 4 hours maximum
+const PRICE_STALENESS_THRESHOLD: i64 = 1800; // 30 minutes
 
     // Initialize the wrapper contract - Sprint 1 version
     pub fn initialize(ctx: Context<Initialize>, authority: Pubkey) -> Result<()> {

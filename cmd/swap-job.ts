@@ -49,7 +49,7 @@ const program = new Program(idl as any, PROGRAM_ID, provider)!;
 async function updateContractPrices(priceData: PriceData): Promise<UpdateResult> {
   try {
     // Calculate APM price and get market data
-    const apmResult: APMPriceResult = calculateAPMPrice(priceData);
+    const apmResult: APMPriceResult = await calculateAPMPrice(priceData);
     console.log('APM Price Result:', JSON.stringify(apmResult, null, 2));
 
     // Extract prices (converting to lamports/u64 format - assuming 8 decimals)
@@ -80,7 +80,7 @@ async function updateContractPrices(priceData: PriceData): Promise<UpdateResult>
       .rpc();
 
     console.log(`✅ Transaction successful: ${txSignature}`);
-    console.log(`📊 Updated prices - USDC: $${(usdcPrice / 10**8).toFixed(4)}, USDT: $${(usdtPrice / 10**8).toFixed(4)}, APM: $${(apmPrice / 10**8).toFixed(4)}`);
+    console.log(`  Updated prices - USDC: $${(usdcPrice / 10**8).toFixed(4)}, USDT: $${(usdtPrice / 10**8).toFixed(4)}, APM: $${(apmPrice / 10**8).toFixed(4)}`);
 
     return {
       success: true,

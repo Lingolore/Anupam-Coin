@@ -99,10 +99,10 @@ async function fetchPricesWithRetry() {
 async function updatePrices() {
     try {
         const priceData = await fetchPrices();
-        const apmPrice = calculateAPMPrice(priceData);
-       const result =  updateContractPrices(priceData);
-
-       console.log("Price Updated ")
+        const apmPrice = await calculateAPMPrice(priceData);
+       const result =  await updateContractPrices(priceData);
+        
+       console.log("Price Updated ",result,"APM Price: ", apmPrice);
     }
     catch (error:any) {
         console.error(`[${new Date().toISOString()}] Price update failed:`, error.message);
@@ -110,7 +110,7 @@ async function updatePrices() {
     }finally{
         // Schedule next execution after current one completes
         if (!isShuttingDown) {
-            priceTimeout = setTimeout(updatePrices, 60 * 1000); // Update every minute
+            priceTimeout = setTimeout(updatePrices,  10000); // Update every minute
         }
     }
 }
